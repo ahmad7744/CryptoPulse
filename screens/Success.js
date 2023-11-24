@@ -12,7 +12,7 @@ const Success = ({ children }) => {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover', // You can change this based on your preference (cover, contain, stretch, etc.)
+    resizeMode: 'cover', 
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    // You can add additional styling for the content inside the background image
   },
 });
 

@@ -11,6 +11,7 @@ import LoginScreen from './screens/LoginScreen';
 import Home from './screens/Home';
 import Notifications from './screens/NotificationsScreen';
 import Settings from './screens/SettingsScreen';
+import SearchCurrency from './screens/SearchCurrency';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();

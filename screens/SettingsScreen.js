@@ -1,7 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button , ImageBackground} from 'react-native';
 
-const SettingsScreen = () => {
+const SettingsScreen = ({navigation}) => {
+  const handleLogout = async () => {
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'Login'}],
+    });
+    setIsLoggedIn(false);
+  };
 
  
 
@@ -9,8 +16,7 @@ const SettingsScreen = () => {
     <ImageBackground source={require('../assets/Dashboardbg.png')}style={dashboardStyles.DashboardBG}>
     <View style={dashboardStyles.container}>
       <Text style={dashboardStyles.headerText}>Welcome to the SettingsScreen</Text>
-      {/* Add more components/content as needed */}
-      <Button title="Logout" />
+      <Button title="Logout" onPress={handleLogout} />
     </View>
     </ImageBackground>
     

@@ -19,7 +19,7 @@ const AppNavigator = createSwitchNavigator(
     App: AppStack,
   },
   {
-    initialRouteName: 'Auth', // Change to 'App' if you want to start with the dashboard
+    initialRouteName: 'Auth', 
   }
 );
 
