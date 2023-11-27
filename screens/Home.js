@@ -159,7 +159,8 @@ const Home = () => {
     >
       <View style={styles.Mcontainer}>
         {!showSearchAdd ? (
-          <>
+        <React.Fragment>
+        
             <View style={styles.container}>
               <Text style={{ color: '#6D778B', fontSize: 14, alignSelf: 'flex-end' }}>
                 Crypto Monitoring
@@ -170,7 +171,7 @@ const Home = () => {
             </View>
 
             {renderContent()}
-          </>
+        </React.Fragment>
         ) : (
           <SearchCurrency onBack={handleBack} onCryptoSelect={handleCryptoSelect} />
         )}

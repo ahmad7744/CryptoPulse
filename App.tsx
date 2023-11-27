@@ -37,7 +37,7 @@ const MainStack = () => (
         let iconName = 'default';
         let iconSource;
 
-        if (route.name === 'Home') {
+        if (route.name === 'TabHome') {
           iconName = 'Home.png';
           iconSource = require('./assets/Home.png');
         } else if (route.name === 'Notifications') {
@@ -55,7 +55,7 @@ const MainStack = () => (
     })}
 
   >
-    <Tab.Screen name="Home" component={Home} />
+    <Tab.Screen name="TabHome" component={Home} />
     <Tab.Screen name="Notifications" component={Notifications} />
     <Tab.Screen name="Settings" component={Settings} />
   </Tab.Navigator>

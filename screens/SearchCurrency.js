@@ -189,37 +189,136 @@
 
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import useWebSocket from 'react-native-use-websocket';
-import { View, Text, FlatList } from 'react-native';
+import _ from 'lodash';
 
 const SOCKET_URL = 'wss://wsaws.okx.com:8443/ws/v5/public';
 const tickerChannel = 'index-tickers';
-const tickerInstIds = [
-  'BTC-USDT',
-  'ETH-USDT',
-  'XRP-USDT',
-  'LTC-USDT',
-  'ADA-USDT',
-  'DOT-USDT',
-  'UNI-USDT',
-  'LINK-USDT',
-  'DOGE-USDT',
-  'BCH-USDT',
+
+const allCoins = [
+  { instId: 'BTC-USDT', name: 'Bitcoin', icon: require('../assets/btc-Icon.png') },
+  { instId: 'ETH-USDT', name: 'Ethereum', icon: require('../assets/Eth-icon.png') },
+  { instId: 'BCH-USDT', name: 'Bitcoin Cash', icon: require('../assets/btc-Icon.png') },
+  { instId: 'XRP-USDT', name: 'Ripple', icon: require('../assets/Ripple-icon.png') },
+  { instId: 'LTC-USDT', name: 'Litecoin', icon: require('../assets/Litecoin-icon.png') },
+  { instId: 'DASH-USDT', name: 'DASH', icon: require('../assets/Dash-Icon.png') },
 ];
 
-export default function SearchCurrency() {
+const CoinItem = React.memo(({ item, tickerValues }) => (
+  <TouchableOpacity>
+    <View style={styles.coinItem}>
+      <View style={styles.coinInfo}>
+        <Image source={item.icon} style={{ marginRight: 20 }} />
+        <View>
+          <Text style={styles.coinText}>{item.name}</Text>
+          <Text style={styles.coinTextOne}>{item.instId}</Text>
+        </View>
+      </View>
+      <Text style={styles.timestampText}>{tickerValues[item.instId]?.ts}</Text>
+      <Text style={styles.priceText}>${tickerValues[item.instId]?.idxPx}</Text>
+    </View>
+  </TouchableOpacity>
+));
+
+const styles = StyleSheet.create({
+
+
+  searchIcon: {
+    tintColor: '#6D778B',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal:30
+  },
+  inputContainer: {
+    margin: 10,
+  },
+  coinItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    alignItems:"center"
+  },
+  coinInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  coinText: {
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  coinTextOne: {
+    fontWeight: 'bold',
+    color: 'red',
+  },
+  timestampText: {
+    fontWeight: 'bold',
+    color: 'green',
+  },
+  priceText: {
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    backgroundColor: '#1A202E',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    marginLeft: 10,
+    fontFamily: 'SF-Pro-Text-Bold',
+    fontSize: 14,
+    height: 38,
+  },
+  headerText: {
+    fontFamily: 'SF-Pro-Text-Bold',
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 22,
+  },
+  back: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 58.5,
+  },
+});
+
+export default function SearchCurrency({ onBack }) {
   const { sendMessage, lastMessage } = useWebSocket(SOCKET_URL, {
     onOpen: () => console.log('WebSocket Connected'),
-    shouldReconnect: closeEvent => true,
+    shouldReconnect: (closeEvent) => true,
   });
 
   const [tickerValues, setTickerValues] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = useCallback(
+    _.debounce((query) => {
+      setSearchQuery(query);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
-    const subscriptions = tickerInstIds.map(instId => ({
+    const subscriptions = allCoins.map((coin) => ({
       channel: tickerChannel,
-      instId,
+      instId: coin.instId,
     }));
 
     const message = {
@@ -236,26 +335,24 @@ export default function SearchCurrency() {
       };
       sendMessage(JSON.stringify(unsubscribeMessage));
     };
-  }, [tickerInstIds, sendMessage]);
+  }, [allCoins, sendMessage]);  // <-- Add dependencies here
 
   useEffect(() => {
     if (lastMessage && lastMessage.data) {
       try {
         const data = JSON.parse(lastMessage.data);
-        console.log('Received data:', data);
 
         if (data?.data) {
-          setTickerValues(prevValues => {
+          setTickerValues((prevValues) => {
             const updatedValues = {};
-            data.data.forEach(item => {
+            data.data.forEach((item) => {
               updatedValues[item.instId] = {
                 idxPx: item.idxPx,
                 pxVar: item.pxVar,
-                // Add more properties as needed
+                ts: item.ts,
               };
             });
 
-            // Check if there are changes before updating state
             return { ...prevValues, ...updatedValues };
           });
         }
@@ -263,31 +360,35 @@ export default function SearchCurrency() {
         console.error('Error parsing JSON:', error);
       }
     }
-  }, [lastMessage]);
+  }, [lastMessage]);  // <-- Dependency array for useEffect
 
-  console.log('Ticker Values:', tickerValues);
+  const filteredCoins = allCoins.filter((coin) =>
+    coin.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
 
   return (
-    <View>
+    <View style={{ flexDirection: 'column', gap: 40 }}>
+      <View style={styles.back}>
+        <TouchableOpacity onPress={onBack}>
+          <Image source={require('../assets/back-icon.png')} />
+        </TouchableOpacity>
+        <Text style={styles.headerText}>Add Crypto to Monitor</Text>
+      </View>
+      <View style={styles.searchContainer}>
+        <Image source={require('../assets/search-icon.png')} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search"
+          placeholderTextColor="#6D778B"
+          value={searchQuery}
+          onChangeText={handleSearchChange}
+        />
+      </View>
       <FlatList
-        data={tickerInstIds}
-        keyExtractor={item => item}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              padding: 10,
-            }}>
-            <Text style={{ fontWeight: 'bold', color: 'white' }}>{item}</Text>
-            <Text style={{ fontWeight: 'bold', color: 'green' }}>
-              {tickerValues[item]?.ts}
-            </Text>
-            <Text style={{ fontWeight: 'bold', color: 'white' }}>
-              ${tickerValues[item]?.idxPx}
-            </Text>
-          </View>
-        )}
+        data={filteredCoins}
+        keyExtractor={(item) => item.instId}
+        renderItem={({ item }) => <CoinItem item={item} tickerValues={tickerValues} />}
       />
     </View>
   );
