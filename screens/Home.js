@@ -1,38 +1,129 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
 import SearchCurrency from './SearchCurrency';
+// import useWebSocket from 'react-native-use-websocket';
+
+const SOCKET_URL = 'wss://wsaws.okx.com:8443/ws/v5/public';
+const tickerChannel = 'index-tickers';
 
 const Home = () => {
   const [showSearchAdd, setShowSearchAdd] = useState(false);
   const [selectedCryptos, setSelectedCryptos] = useState([]);
   const [contentIndex, setContentIndex] = useState(0);
-  const baseUrl = "https://www.okx.com/api/v5"
+
+  const [tickerValues, setTickerValues] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const socket = new WebSocket(SOCKET_URL);
+    socket.onopen = () => {
+      const subscriptions = allCoins.map((coin) => ({
+        channel: tickerChannel,
+        instId: coin.instId,
+      }));
+
+      const message = {
+        op: 'subscribe',
+        args: subscriptions,
+      };
+      socket.send(JSON.stringify(message))
+    }
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data?.data) {
+          setTickerValues((prevValues) => {
+            const updatedValues = {};
+            data.data.forEach((item) => {
+              updatedValues[item.instId] = {
+                idxPx: item.idxPx,
+                pxVar: item.pxVar,
+                ts: item.ts,
+              };
+            });
+
+            return { ...prevValues, ...updatedValues };
+          });
+        }
+      } catch (error) {
+        console.log({ error })
+      }
+    }
+
+    return () => {
+      socket.close()
+    }
+    // return () => {
+    //   const unsubscribeMessage = {
+    //     op: 'unsubscribe',
+    //     args: subscriptions,
+    //   };
+    //   sendMessage(JSON.stringify(unsubscribeMessage));
+    // };
+  }, []);
+
   const handleButtonPress = () => {
     setShowSearchAdd(true);
   };
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const params = {
-          instType: 'SPOT',
-          instId: 'BTC-USDT'
-        };
-        const url = `${baseUrl}/public/instruments?` + new URLSearchParams(params);
-        // Make API call using fetch
-        const response = await fetch(url);
-        const result = await response.json();
-        console.log({ result })
-        // Update state with the fetched data
-      } catch (err) {
-        // Handle errors
-      }
-    };
 
-    fetchData();
-  }, []);
-  const handleBack = () => {
-    setShowSearchAdd(false);
-  };
+
+  // useEffect(() => {
+  //   const subscriptions = selectedCryptos.map((crypto) => ({
+  //     channel: tickerChannel,
+  //     instId: crypto?.instId,
+  //   }));
+
+  //   const message = {
+  //     op: 'subscribe',
+  //     args: subscriptions,
+  //   };
+
+  //   sendMessage(JSON.stringify(message));
+
+  //   return () => {
+  //     const unsubscribeMessage = {
+  //       op: 'unsubscribe',
+  //       args: subscriptions,
+  //     };
+  //     sendMessage(JSON.stringify(unsubscribeMessage));
+  //   };
+  // }, [selectedCryptos, sendMessage]);
+
+  // useEffect(() => {
+  //   if (lastMessage && lastMessage.data) {
+  // try {
+  //   const data = JSON.parse(lastMessage.data);
+  //   if (data?.data) {
+  //     setTickerValues((prevValues) => {
+  //       const updatedValues = {};
+  //       data.data.forEach((item) => {
+  //         updatedValues[item.instId] = {
+  //           idxPx: item.idxPx,
+  //           pxVar: item.pxVar,
+  //           ts: item.ts,
+  //         };
+  //       });
+
+  //       return { ...prevValues, ...updatedValues };
+  //     });
+  //   }
+  // } catch (error) {
+  //   console.error('Error parsing JSON:', error);
+  // }
+  //   }
+  // }, [lastMessage]);
+  const allCoins = [
+    { instId: 'BTC-USDT', name: 'Bitcoin', icon: require('../assets/btc-Icon.png') },
+    { instId: 'ETH-USDT', name: 'Ethereum', icon: require('../assets/Eth-icon.png') },
+    { instId: 'BCH-USDT', name: 'Bitcoin Cash', icon: require('../assets/btc-Icon.png') },
+    { instId: 'XRP-USDT', name: 'Ripple', icon: require('../assets/Ripple-icon.png') },
+    { instId: 'LTC-USDT', name: 'Litecoin', icon: require('../assets/Litecoin-icon.png') },
+    { instId: 'DASH-USDT', name: 'DASH', icon: require('../assets/Dash-Icon.png') },
+  ];
+  const filteredCoins = allCoins.filter((coin) =>
+    coin.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleCryptoSelect = (crypto) => {
 
@@ -40,8 +131,31 @@ const Home = () => {
 
     setContentIndex(contentIndex + 1);
   };
-  console.log({ selectedCryptos })
+  const handleBack = () => {
+    setShowSearchAdd(false);
+  };
+  console.log({ selectedCryptos, tickerValues })
+  function gettingTheRealtimeValues() {
+    setSelectedCryptos((prevSelectedCryptos) => {
+      return prevSelectedCryptos.map((crypto) => {
+        const updatedTicker = tickerValues[crypto.instId];
+        return {
+          ...crypto,
+          price: updatedTicker?.idxPx,
+        };
+      });
+    });
+  }
 
+
+  useEffect(() => {
+    if (selectedCryptos?.length < 1) return
+
+    gettingTheRealtimeValues()
+  }, [tickerValues, selectedCryptos?.length])
+  let searchProps = {
+    onBack: handleBack, onCryptoSelect: handleCryptoSelect, setSelectedCryptos, tickerValues, filteredCoins, searchQuery, setSearchQuery
+  }
   const renderContent = () => {
     if (selectedCryptos.length > 0) {
 
@@ -55,39 +169,39 @@ const Home = () => {
                 color: '#fff',
                 lineHeight: 22,
               }}>
-              {crypto.name}
+              {crypto?.name}
             </Text>
             <Text
               style={{
                 fontFamily: 'SF-Pro-Text-Bold',
                 fontSize: 11,
-                color: crypto.change.startsWith('+') ? '#00C873' : '#FF3750',
+                color: '#FF3750',
                 lineHeight: 22,
               }}>
-              {crypto.change}
+              {crypto?.change}
             </Text>
             <Text
               style={{
                 fontFamily: 'SF-Pro-Text-Bold',
                 fontSize: 11,
-                color: crypto.change.startsWith('+') ? '#00C873' : '#FF3750',
+                color: 'white',
                 lineHeight: 12,
               }}>
-              {crypto.price}
+              ${crypto?.price}
             </Text>
           </View>
           <View>
-            <Image source={crypto.change.startsWith('-') ? require('../assets/Graph-1.png') : require('../assets/Graph.png')} />
+            <Image source={require('../assets/Graph.png')} />
           </View>
           <View>
             <Text
               style={{
                 fontFamily: 'SF-Pro-Text-Bold',
                 fontSize: 14,
-                color: crypto.change.startsWith('+') ? '#00C873' : '#FF3750',
+                color: 'white',
                 lineHeight: 22,
               }}>
-              {crypto.price}
+              ${crypto?.price}
             </Text>
           </View>
         </View>
@@ -159,8 +273,8 @@ const Home = () => {
     >
       <View style={styles.Mcontainer}>
         {!showSearchAdd ? (
-        <React.Fragment>
-        
+          <React.Fragment>
+
             <View style={styles.container}>
               <Text style={{ color: '#6D778B', fontSize: 14, alignSelf: 'flex-end' }}>
                 Crypto Monitoring
@@ -171,9 +285,10 @@ const Home = () => {
             </View>
 
             {renderContent()}
-        </React.Fragment>
+          </React.Fragment>
         ) : (
-          <SearchCurrency onBack={handleBack} onCryptoSelect={handleCryptoSelect} />
+          // <SearchCurrency onBack={handleBack} onCryptoSelect={handleCryptoSelect} setSelectedCryptos={setSelectedCryptos} />
+          <SearchCurrency {...searchProps} />
         )}
       </View>
     </ImageBackground>

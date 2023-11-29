@@ -214,18 +214,29 @@ const allCoins = [
   { instId: 'DASH-USDT', name: 'DASH', icon: require('../assets/Dash-Icon.png') },
 ];
 
-const CoinItem = React.memo(({ item, tickerValues }) => (
-  <TouchableOpacity>
+const CoinItem = React.memo(({ item, tickerValues, setSelectedCryptos, onPress }) => (
+  <TouchableOpacity onPress={() => {
+    if (tickerValues != undefined) {
+      const selectedCrypto = {
+        ...item,
+        ticker: tickerValues[item.instId],
+        price: tickerValues[item.instId]?.idxPx
+      };
+      setSelectedCryptos((prevSelectedCryptos) => [...prevSelectedCryptos, selectedCrypto]);
+      onPress(selectedCrypto);
+    }
+  }}>
     <View style={styles.coinItem}>
       <View style={styles.coinInfo}>
-        <Image source={item.icon} style={{ marginRight: 20 }} />
+        <Image source={item.icon} />
+      </View>
+      <View style={styles.nameprice} >
         <View>
           <Text style={styles.coinText}>{item.name}</Text>
           <Text style={styles.coinTextOne}>{item.instId}</Text>
         </View>
+        <Text style={styles.priceText}>${tickerValues[item.instId]?.idxPx}</Text>
       </View>
-      <Text style={styles.timestampText}>{tickerValues[item.instId]?.ts}</Text>
-      <Text style={styles.priceText}>${tickerValues[item.instId]?.idxPx}</Text>
     </View>
   </TouchableOpacity>
 ));
@@ -238,20 +249,31 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal:30
+    paddingHorizontal: 30
   },
   inputContainer: {
     margin: 10,
   },
   coinItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    alignItems:"center"
+    alignItems: "center",
+    gap: 20,
+    width: "100%"
+
   },
   coinInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  nameprice: {
+    borderBottomWidth: 1,
+    paddingVertical: 16,
+    borderBottomColor: '#1A202E',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%"
+
+
   },
   coinText: {
     fontWeight: 'bold',
@@ -259,7 +281,7 @@ const styles = StyleSheet.create({
   },
   coinTextOne: {
     fontWeight: 'bold',
-    color: 'red',
+    color: '#6D778B',
   },
   timestampText: {
     fontWeight: 'bold',
@@ -299,14 +321,19 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function SearchCurrency({ onBack }) {
-  const { sendMessage, lastMessage } = useWebSocket(SOCKET_URL, {
-    onOpen: () => console.log('WebSocket Connected'),
-    shouldReconnect: (closeEvent) => true,
-  });
+export default function SearchCurrency({ onBack, onCryptoSelect, setSelectedCryptos, tickerValues, filteredCoins, searchQuery, setSearchQuery }) {
+  // const { sendMessage, lastMessage } = useWebSocket(SOCKET_URL, {
+  //   onOpen: () => console.log('WebSocket Connected'),
+  //   shouldReconnect: (closeEvent) => true,
+  // });
 
-  const [tickerValues, setTickerValues] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
+  const handleCoinSelect = (coin) => {
+    onCryptoSelect(coin);
+    onBack();
+  };
+
+  // const [tickerValues, setTickerValues] = useState({});
+  // const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearchChange = useCallback(
     _.debounce((query) => {
@@ -315,60 +342,59 @@ export default function SearchCurrency({ onBack }) {
     []
   );
 
-  useEffect(() => {
-    const subscriptions = allCoins.map((coin) => ({
-      channel: tickerChannel,
-      instId: coin.instId,
-    }));
+  // useEffect(() => {
+  //   const subscriptions = allCoins.map((coin) => ({
+  //     channel: tickerChannel,
+  //     instId: coin.instId,
+  //   }));
 
-    const message = {
-      op: 'subscribe',
-      args: subscriptions,
-    };
+  //   const message = {
+  //     op: 'subscribe',
+  //     args: subscriptions,
+  //   };
 
-    sendMessage(JSON.stringify(message));
+  //   sendMessage(JSON.stringify(message));
 
-    return () => {
-      const unsubscribeMessage = {
-        op: 'unsubscribe',
-        args: subscriptions,
-      };
-      sendMessage(JSON.stringify(unsubscribeMessage));
-    };
-  }, [allCoins, sendMessage]);  // <-- Add dependencies here
+  //   return () => {
+  //     const unsubscribeMessage = {
+  //       op: 'unsubscribe',
+  //       args: subscriptions,
+  //     };
+  //     sendMessage(JSON.stringify(unsubscribeMessage));
+  //   };
+  // }, [allCoins, sendMessage]); 
+  // useEffect(() => {
+  //   if (lastMessage && lastMessage.data) {
+  //     try {
+  //       const data = JSON.parse(lastMessage.data);
 
-  useEffect(() => {
-    if (lastMessage && lastMessage.data) {
-      try {
-        const data = JSON.parse(lastMessage.data);
+  //       if (data?.data) {
+  //         setTickerValues((prevValues) => {
+  //           const updatedValues = {};
+  //           data.data.forEach((item) => {
+  //             updatedValues[item.instId] = {
+  //               idxPx: item.idxPx,
+  //               pxVar: item.pxVar,
+  //               ts: item.ts,
+  //             };
+  //           });
 
-        if (data?.data) {
-          setTickerValues((prevValues) => {
-            const updatedValues = {};
-            data.data.forEach((item) => {
-              updatedValues[item.instId] = {
-                idxPx: item.idxPx,
-                pxVar: item.pxVar,
-                ts: item.ts,
-              };
-            });
+  //           return { ...prevValues, ...updatedValues };
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error('Error parsing JSON:', error);
+  //     }
+  //   }
+  // }, [lastMessage]); 
 
-            return { ...prevValues, ...updatedValues };
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing JSON:', error);
-      }
-    }
-  }, [lastMessage]);  // <-- Dependency array for useEffect
-
-  const filteredCoins = allCoins.filter((coin) =>
-    coin.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // const filteredCoins = allCoins.filter((coin) =>
+  //   coin.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
 
 
   return (
-    <View style={{ flexDirection: 'column', gap: 40 }}>
+    <View style={{ flexDirection: 'column', gap: 20 }}>
       <View style={styles.back}>
         <TouchableOpacity onPress={onBack}>
           <Image source={require('../assets/back-icon.png')} />
@@ -386,9 +412,11 @@ export default function SearchCurrency({ onBack }) {
         />
       </View>
       <FlatList
-        data={filteredCoins}
+        data={allCoins}
         keyExtractor={(item) => item.instId}
-        renderItem={({ item }) => <CoinItem item={item} tickerValues={tickerValues} />}
+        renderItem={({ item }) => <CoinItem item={item} tickerValues={tickerValues} onPress={() => {
+          handleCoinSelect(item)
+        }} setSelectedCryptos={setSelectedCryptos} />}
       />
     </View>
   );
