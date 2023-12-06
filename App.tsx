@@ -4,14 +4,13 @@ import Swiper from 'react-native-swiper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import WalkthroughOne from './screens/WalkthroughOne';
 import WalkthroughTwo from './screens/WalkthroughTwo';
 import LoginScreen from './screens/LoginScreen';
 import Home from './screens/Home';
 import Notifications from './screens/NotificationsScreen';
 import Settings from './screens/SettingsScreen';
-import SearchCurrency from './screens/SearchCurrency';
+
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,6 +100,7 @@ const App = () => {
           {({ navigation }) => <LoginScreen navigation={navigation} />}
         </Stack.Screen>
         <Stack.Screen name="Home" component={MainStack} />
+       
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,59 +1,109 @@
-import React, { useState, useEffect } from 'react';
+import React, { memo, useEffect, useState } from 'react';
+import { View, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, Text } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { View } from 'react-native';
-const LiveChart = () => {
-  const [data, setData] = useState({
+
+const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
+  const [chartData, setChartData] = useState({
     labels: [],
-    datasets: [
-      {
-        data: [],
-      },
-    ],
+    datasets: [{ data: [] }],
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Your code to fetch live data and update the state
-    const fetchData = async () => {
-      // Fetch live data, e.g., from an API
-      const response = await fetch('YOUR_API_ENDPOINT');
-      const result = await response.json();
+    if (!selectedCryptos || !tickerValues) {
+      console.log('Data is not ready yet.');
+      setLoading(true);
+      return;
+    }
 
-      // Update state with new data
-      setData((prevData) => ({
-        labels: [...prevData.labels, newLabel],
-        datasets: [
-          {
-            data: [...prevData.datasets[0].data, newData],
-          },
-        ],
-      }));
+    const newLabels = [...chartData.labels];
+    const newData = {
+      labels: newLabels,
+      datasets: [
+        {
+          data: [...chartData.datasets[0].data],
+        },
+      ],
     };
 
-    // Set an interval to fetch data at regular intervals
-    const interval = setInterval(fetchData, 1000); // Update every 1000 milliseconds (1 second)
+    selectedCryptos.forEach((crypto) => {
+      const cryptoData = tickerValues[crypto.instId];
+      if (cryptoData) {
+        // Append new data to the end of the dataset
+        newData.labels.push(formatTimestamp(Date.now()));
+        newData.datasets[0].data.push(parseFloat(cryptoData.idxPx));
+      }
+    });
 
-    // Cleanup the interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    console.log('New Chart Data:', newData);
+    setChartData(newData);
+    setLoading(false);
+  }, [selectedCryptos, tickerValues]);
+
+  const formatTimestamp = (timestamp) => {
+    // Format timestamp logic
+    const date = new Date(timestamp);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const seconds = date.getSeconds();
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
+  const chartConfig = {
+    backgroundGradientFromOpacity: 0.5,
+    backgroundGradientToOpacity: 0.5,
+    color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: '#ffa726',
+    },
+  };
 
   return (
-    <View>
-      <LineChart
-        data={data}
-        width={300} // Width of the chart
-        height={200} // Height of the chart
-        chartConfig={{
-          backgroundGradientFrom: '#ffffff',
-          backgroundGradientTo: '#ffffff',
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-        }}
-        bezier
-      />
-    </View>
+    <ImageBackground source={require('../assets/Dashboardbg.png')} style={{ width: '100%', height: '100%' }}>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={Back}>
+          <Image source={require('../assets/back-icon.png')} />
+        </TouchableOpacity>
+
+        <View style={styles.chartContainer}>
+          {loading ? (
+            <Text>Loading...</Text>
+          ) : (
+            <LineChart
+              data={chartData}
+              width={Dimensions.get('window').width - 32}
+              height={220}
+              yAxisLabel="$"
+              yAxisInterval={1}
+              chartConfig={chartConfig}
+              bezier
+              style={{
+                borderRadius: 16,
+              }}
+            />
+          )}
+        </View>
+      </View>
+    </ImageBackground>
   );
 };
 
-export default LiveChart;
+const styles = StyleSheet.create({
+  container: {
+    paddingTop: 70,
+    paddingHorizontal: 15,
+    display: 'flex',
+    gap: 20,
+  },
+  chartContainer: {
+    alignItems: 'center',
+  },
+});
+
+export default memo(LiveChart);
