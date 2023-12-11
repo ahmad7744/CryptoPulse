@@ -1,5 +1,5 @@
-import React, { memo, useEffect, useState } from 'react';
-import { View, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, Text } from 'react-native';
+import React, { memo, useEffect, useState, useRef } from 'react';
+import { View, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, Text, ScrollView } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
@@ -8,6 +8,7 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
     datasets: [{ data: [] }],
   });
   const [loading, setLoading] = useState(true);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     if (!selectedCryptos || !tickerValues) {
@@ -29,19 +30,35 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
     selectedCryptos.forEach((crypto) => {
       const cryptoData = tickerValues[crypto.instId];
       if (cryptoData) {
-        // Append new data to the end of the dataset
         newData.labels.push(formatTimestamp(Date.now()));
         newData.datasets[0].data.push(parseFloat(cryptoData.idxPx));
+
+
+        if (newData.labels.length > 8) {
+          newData.labels = newData.labels.slice(newData.labels.length - 8);
+          newData.datasets[0].data = newData.datasets[0].data.slice(newData.datasets[0].data.length - 50);
+        }
+
+        /*
+   if (newData.labels.length > 8) {
+     newData.labels.shift();
+     newData.datasets[0].data.shift();
+   }
+   */
       }
     });
 
     console.log('New Chart Data:', newData);
     setChartData(newData);
     setLoading(false);
+
+
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
   }, [selectedCryptos, tickerValues]);
 
   const formatTimestamp = (timestamp) => {
-    // Format timestamp logic
     const date = new Date(timestamp);
     const hours = date.getHours();
     const minutes = date.getMinutes();
@@ -58,10 +75,15 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
       borderRadius: 16,
     },
     propsForDots: {
-      r: '6',
+      r: '2',
       strokeWidth: '2',
       stroke: '#ffa726',
     },
+    yAxisInterval: 5,
+
+
+
+
   };
 
   return (
@@ -71,24 +93,36 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
           <Image source={require('../assets/back-icon.png')} />
         </TouchableOpacity>
 
-        <View style={styles.chartContainer}>
-          {loading ? (
-            <Text>Loading...</Text>
-          ) : (
-            <LineChart
-              data={chartData}
-              width={Dimensions.get('window').width - 32}
-              height={220}
-              yAxisLabel="$"
-              yAxisInterval={1}
-              chartConfig={chartConfig}
-              bezier
-              style={{
-                borderRadius: 16,
-              }}
-            />
-          )}
-        </View>
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          contentContainerStyle={styles.chartScrollView}
+          onContentSizeChange={() => {
+            if (scrollViewRef.current) {
+              scrollViewRef.current.scrollToEnd({ animated: true });
+            }
+          }}
+        >
+          <View style={styles.chartContainer}>
+            {loading ? (
+              <Text>Loading...</Text>
+            ) : (
+              <LineChart
+                data={chartData}
+                width={Math.max(Dimensions.get('window').width, chartData.labels.length * 60)}
+                height={220}
+                yAxisLabel="$"
+                yAxisInterval={5}
+                yLabelsOffset={5}
+                chartConfig={chartConfig}
+                bezier
+                style={{
+                  borderRadius: 16,
+                }}
+              />
+            )}
+          </View>
+        </ScrollView>
       </View>
     </ImageBackground>
   );
@@ -102,6 +136,9 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   chartContainer: {
+    alignItems: 'center',
+  },
+  chartScrollView: {
     alignItems: 'center',
   },
 });
