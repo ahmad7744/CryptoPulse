@@ -344,7 +344,7 @@
 
 
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ImageBackground } from 'react-native';
 import SearchCurrency from './SearchCurrency';
 import LiveChart from './LiveChart';
@@ -597,7 +597,7 @@ const Home = () => {
               {renderContent()}
             </React.Fragment>
           ) : (
-            // <SearchCurrency onBack={handleBack} onCryptoSelect={handleCryptoSelect} setSelectedCryptos={setSelectedCryptos} />
+            
             <SearchCurrency {...searchProps} />
           )}
         </View>
@@ -651,4 +651,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+export default memo(Home);

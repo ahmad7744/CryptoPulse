@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import React, { memo, useEffect, useState, useRef } from 'react';
 import { View, TouchableOpacity, ImageBackground, Image, StyleSheet, Dimensions, Text, ScrollView } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -34,9 +35,9 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
         newData.datasets[0].data.push(parseFloat(cryptoData.idxPx));
 
 
-        if (newData.labels.length > 8) {
-          newData.labels = newData.labels.slice(newData.labels.length - 8);
-          newData.datasets[0].data = newData.datasets[0].data.slice(newData.datasets[0].data.length - 50);
+        if (newData.labels.length > 6) {
+          newData.labels = newData.labels.slice(newData.labels.length - 6);
+          newData.datasets[0].data = newData.datasets[0].data.slice(newData.datasets[0].data.length - 30);
         }
 
         /*
@@ -79,13 +80,18 @@ const LiveChart = ({ selectedCryptos, tickerValues, Back }) => {
       strokeWidth: '2',
       stroke: '#ffa726',
     },
-    yAxisInterval: 5,
+    yAxisInterval: 8,
+    
 
 
 
 
   };
 
+ 
+
+
+  
   return (
     <ImageBackground source={require('../assets/Dashboardbg.png')} style={{ width: '100%', height: '100%' }}>
       <View style={styles.container}>

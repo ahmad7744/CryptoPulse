@@ -7,6 +7,7 @@ import {
     StyleSheet,
     ImageBackground,
     Image,
+    Alert,
 } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,7 +40,7 @@ const LoginScreen = ({ navigation }) => {
             navigation.replace('Home');
             setuserlogin(true);
         } else {
-            
+            Alert.alert("Invalid credentials", "Please try again.");
             console.log('Invalid credentials. Please try again.');
         }
     };

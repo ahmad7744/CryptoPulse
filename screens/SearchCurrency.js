@@ -733,11 +733,11 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import useWebSocket from 'react-native-use-websocket';
+
 import _ from 'lodash';
 
-const SOCKET_URL = 'wss://wsaws.okx.com:8443/ws/v5/public';
-const tickerChannel = 'index-tickers';
+
+
 
 const allCoins = [
   { instId: 'BTC-USDT', name: 'Bitcoin', icon: require('../assets/btc-Icon.png') },
@@ -857,18 +857,14 @@ const styles = StyleSheet.create({
 });
 
 export default function SearchCurrency({ onBack, onCryptoSelect, setSelectedCryptos, tickerValues, filteredCoins, searchQuery, setSearchQuery }) {
-  // const { sendMessage, lastMessage } = useWebSocket(SOCKET_URL, {
-  //   onOpen: () => console.log('WebSocket Connected'),
-  //   shouldReconnect: (closeEvent) => true,
-  // });
+ 
 
   const handleCoinSelect = (coin) => {
     onCryptoSelect(coin);
     onBack();
   };
 
-  // const [tickerValues, setTickerValues] = useState({});
-  // const [searchQuery, setSearchQuery] = useState('');
+ 
 
   const handleSearchChange = useCallback(
     _.debounce((query) => {
@@ -876,57 +872,6 @@ export default function SearchCurrency({ onBack, onCryptoSelect, setSelectedCryp
     }, 300),
     []
   );
-
-  // useEffect(() => {
-  //   const subscriptions = allCoins.map((coin) => ({
-  //     channel: tickerChannel,
-  //     instId: coin.instId,
-  //   }));
-
-  //   const message = {
-  //     op: 'subscribe',
-  //     args: subscriptions,
-  //   };
-
-  //   sendMessage(JSON.stringify(message));
-
-  //   return () => {
-  //     const unsubscribeMessage = {
-  //       op: 'unsubscribe',
-  //       args: subscriptions,
-  //     };
-  //     sendMessage(JSON.stringify(unsubscribeMessage));
-  //   };
-  // }, [allCoins, sendMessage]); 
-  // useEffect(() => {
-  //   if (lastMessage && lastMessage.data) {
-  //     try {
-  //       const data = JSON.parse(lastMessage.data);
-
-  //       if (data?.data) {
-  //         setTickerValues((prevValues) => {
-  //           const updatedValues = {};
-  //           data.data.forEach((item) => {
-  //             updatedValues[item.instId] = {
-  //               idxPx: item.idxPx,
-  //               pxVar: item.pxVar,
-  //               ts: item.ts,
-  //             };
-  //           });
-
-  //           return { ...prevValues, ...updatedValues };
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error('Error parsing JSON:', error);
-  //     }
-  //   }
-  // }, [lastMessage]); 
-
-  // const filteredCoins = allCoins.filter((coin) =>
-  //   coin.name.toLowerCase().includes(searchQuery.toLowerCase())
-  // );
-
 
   return (
     <View style={{ flexDirection: 'column', gap: 20 }}>
