@@ -1,13 +1,16 @@
 import React from 'react';
 import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity , Picker } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+
 
 
 const CreateAlert = ({ selectedCryptos }) => {
   if (!selectedCryptos || selectedCryptos.length === 0) {
     return <Text>No selected cryptocurrencies</Text>;
   }
-  const [selectedItemValue, setSelectedItemValue] = useState('');
+  // const [selectedItemValue, setSelectedItemValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState('Enter Here');
 
   const alertTypes = [
     { label: 'Select Alert Type', value: '' },
@@ -41,17 +44,57 @@ const CreateAlert = ({ selectedCryptos }) => {
           </View>
         </View>
       ))}
-      <View style={Styles.formContainer}>
-        <Text style={Styles.label}>Alert Type:</Text>
+      <View style={Styles.dropdownContainer}>
+        <Text style={{ color: 'white', marginVertical: 20 }}>Alert Type</Text>
         <Picker
-          style={Styles.picker}
-          selectedValue={selectedItemValue}
-          onValueChange={(itemValue) => setSelectedItemValue(itemValue)}
+          selectedValue={selectedValue}
+          onValueChange={(value) => setSelectedValue(value)}
+          style={Styles.inputAndroid}
+          itemStyle={{
+            backgroundColor: 'green',
+            marginLeft: 0,
+            paddingLeft: 15
+          }}
+          placeholder='Enter here'
+          mode="dropdown"
         >
-          {alertTypes.map((type) => (
-            <Picker.Item key={type.value} label={type.label} value={type.value} />
-          ))}
+          <Picker.Item label="Price reaches" value="Price reaches"/>
+          <Picker.Item label="Price rises above" value="Price rises above" />
+          <Picker.Item label="Percentage Increase" value="Percentage Increase" />
+          <Picker.Item label="Volume Increase" value="Volume Increase" />
         </Picker>
+      </View>
+      <View style={{ paddingHorizontal: 16 }}>
+        <Text style={{ color: 'white', marginVertical: 20 }}>Value</Text>
+        <TextInput
+          style={Styles.input}
+          placeholder="Enter Here"
+          placeholderTextColor='white'
+
+        />
+      </View>
+      <View style={Styles.dropdownContainer}>
+        <Text style={{ color: 'white', marginVertical: 20 }}>Frequency</Text>
+        <Picker
+          selectedValue={selectedValue}
+          onValueChange={(value) => setSelectedValue(value)}
+          style={Styles.inputAndroid}
+          placeholder='Enter here'
+          mode="dropdown"
+        >
+          <Picker.Item label="Only Once" value="Only Once" />
+          <Picker.Item label="Once a day" value="Once a day" />
+          <Picker.Item label="Always" value="Always" />
+          <Picker.Item label="Custom" value="Custom" />
+          <Picker.Item label="Menu item" value="Menu item" />
+        </Picker>
+      </View>
+      <View style={Styles.container3}>
+        <TouchableOpacity style={Styles.btn} >
+          <Text style={{ color: '#FFFFFF', textAlign: 'center', textAlignVertical: 'center' }}>
+            Create Alert
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -127,6 +170,47 @@ const Styles = StyleSheet.create({
   },
   picker: {
     color: 'white',
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: 'purple',
+    borderRadius: 8,
+    color: 'white',
+    paddingRight: 30,
+    backgroundColor: '#1A202E',
+  },
+  input: {
+    height: 59,
+    borderColor: '#1A202E',
+    backgroundColor: '#1A202E',
+    borderWidth: 1,
+    marginBottom: 16,
+    paddingLeft: 8,
+    width: '100%',
+    paddingLeft: 20,
+    color:"white",
+  },
+  dropdownContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 16,
+  },
+  container3: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '25%',
+    paddingHorizontal: 16,
+  },
+  btn: {
+    backgroundColor: '#3249FF',
+    width: '100%',
+    height: 51,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
