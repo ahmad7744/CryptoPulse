@@ -25,7 +25,7 @@ const CoinItem = React.memo(({ item, tickerValues, setSelectedCryptos, onPress }
     }}>
         <View style={Styles.coinItem}>
             <View style={Styles.coinInfo}>
-                <Image source={item.icon} />
+            <Image source={item.icon} />
             </View>
             <View style={Styles.nameprice} >
                 <View>

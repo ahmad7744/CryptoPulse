@@ -1,13 +1,30 @@
-import React, { useState , useEffect, } from 'react';
+import React, { useState, useEffect, } from 'react';
 import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, Button } from 'react-native';
 import SearchCoin from './SearchCoin';
+import CreateAlert from './CreateAlert';
 
 const AddAlert = () => {
     const [showSearchCurrency, setShowSearchCurrency] = useState(false);
+    const [selectedCryptoForAlert, setSelectedCryptoForAlert] = useState(null);
 
     const handleAddAlertPress = () => {
+        // Reset selectedCryptoForAlert when pressing "Add Alert"
+        setSelectedCryptoForAlert(null);
         setShowSearchCurrency(true);
     };
+
+    const handleCryptoSelect = (crypto) => {
+        setSelectedCryptos([...selectedCryptos, crypto]);
+        setContentIndex(contentIndex + 1);
+
+        // Set the selected crypto for creating an alert
+        setSelectedCryptoForAlert(crypto);
+
+        // Close the search screen
+        setShowSearchCurrency(false);
+    };
+
+
 
     const SOCKET_URL = 'wss://wsaws.okx.com:8443/ws/v5/public';
     const tickerChannel = 'index-tickers';
@@ -86,12 +103,12 @@ const AddAlert = () => {
         coin.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleCryptoSelect = (crypto) => {
+    // const handleCryptoSelect = (crypto) => {
 
-        setSelectedCryptos([...selectedCryptos, crypto]);
+    //     setSelectedCryptos([...selectedCryptos, crypto]);
 
-        setContentIndex(contentIndex + 1);
-    };
+    //     setContentIndex(contentIndex + 1);
+    // };
     const handleBack = () => {
         setShowSearchAdd(false);
     };
@@ -122,32 +139,37 @@ const AddAlert = () => {
     }
 
     return (
-        <ImageBackground source={require('../assets/Dashboardbg.png')} style={Styles.DashboardBG}>
-            {showSearchCurrency ? (
-                <SearchCoin {...searchProps} />
-            ) : (
-                <View style={Styles.mainconint}>
-                    <View style={Styles.container}>
-                        <TouchableOpacity onPress={() => setShowSearchCurrency(false)}>
-                            <Image source={require('../assets/back-icon.png')} />
-                        </TouchableOpacity>
-                        <Text style={Styles.headerText}>Notification Alert</Text>
-                    </View>
+        <ImageBackground
+      source={require('../assets/Dashboardbg.png')}
+      style={Styles.DashboardBG}
+    >
+      {showSearchCurrency ? (
+        <SearchCoin {...searchProps} />
+      ) : selectedCryptoForAlert ? (
+        <CreateAlert selectedCrypto={selectedCryptoForAlert} selectedCryptos={selectedCryptos} />
+      ) : (
+        <View style={Styles.mainconint}>
+          <View style={Styles.container}>
+            <TouchableOpacity onPress={() => setShowSearchCurrency(false)}>
+              <Image source={require('../assets/back-icon.png')} />
+            </TouchableOpacity>
+            <Text style={Styles.headerText}>Notification Alert</Text>
+          </View>
 
+          <View style={{ paddingLeft: 15, paddingRight: 15 }}>
+            <Button
+              style={Styles.Addbtn}
+              title="Add Alert"
+              onPress={handleAddAlertPress}
+            />
+          </View>
 
-
-
-                    <View style={{ paddingLeft: 15, paddingRight: 15 }}>
-                        <Button
-                            style={Styles.Addbtn}
-                            title="Add Alert"
-                            onPress={handleAddAlertPress}
-                        />
-                    </View>
-
-                </View>
-            )}
-        </ImageBackground>
+          {selectedCryptos.map((crypto, index) => (
+            <CreateAlert key={index} selectedCrypto={selectedCryptos} />
+          ))}
+        </View>
+      )}
+    </ImageBackground>
     );
 };
 
