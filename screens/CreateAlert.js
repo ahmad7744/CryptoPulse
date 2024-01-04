@@ -1,28 +1,87 @@
 import React from 'react';
-import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PushNotification from 'react-native-push-notification';
 
 
 
-const CreateAlert = ({ selectedCryptos }) => {
+
+
+
+
+  const CreateAlert = ({ selectedCryptos , onBack }) => {
+  const [selectedValue, setSelectedValue] = useState('Enter Here');
+  const [valueInput, setValueInput] = useState('');
+  const [frequency, setFrequency] = useState('');
   if (!selectedCryptos || selectedCryptos.length === 0) {
     return <Text>No selected cryptocurrencies</Text>;
   }
-  // const [selectedItemValue, setSelectedItemValue] = useState('');
-  const [selectedValue, setSelectedValue] = useState('Enter Here');
 
-  const alertTypes = [
-    { label: 'Select Alert Type', value: '' },
-    { label: 'Price reaches', value: '1' },
-    { label: 'Price rises above', value: '2' },
-    { label: 'Percentage Increase', value: '3' },
-    { label: 'Volume Increase', value: '4' },
-  ];
+  useEffect(() => {
+    // Fetch alerts from local storage when the component mounts
+    fetchAlerts();
+  }, []);
+
+  const handleCreateAlert = async () => {
+    try {
+      // Create an alert object
+      const alertObject = {
+        cryptoId: selectedCryptos[0]?.id, 
+        alertType: selectedValue,
+        value: valueInput,
+        frequency,
+      };
+
+      // Get existing alerts from storage
+      const existingAlerts = await AsyncStorage.getItem('alerts');
+      const alerts = existingAlerts ? JSON.parse(existingAlerts) : [];
+
+      // Add the new alert to the array
+      alerts.push(alertObject);
+      const livePrice = parseFloat(selectedCryptos[0]?.price);
+
+      alerts.forEach((storedAlert) => {
+        if (storedAlert.value && parseFloat(storedAlert.value) === Math.round(livePrice)) {
+          // Trigger push notification
+          console.log('Notification Triggered:', storedAlert);
+          PushNotification.localNotification({
+            channelId: 'default',
+            title: 'Alert Match!',
+            message: `The price of ${selectedCryptos[0]?.name} has reached ${livePrice}`,
+          });
+        }
+
+      });
+
+
+      await AsyncStorage.setItem('alerts', JSON.stringify(alerts));
+
+      // Show success message or trigger notification logic here
+
+      Alert.alert('Alert created successfully!');
+    } catch (error) {
+      console.error('Error creating alert:', error);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      // Fetch alerts from storage and do something with them if needed
+      const existingAlerts = await AsyncStorage.getItem('alerts');
+      const alerts = existingAlerts ? JSON.parse(existingAlerts) : [];
+
+      console.log('Fetched alerts:', alerts);
+      console.log('Number of alerts:', alerts.length);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    }
+  };
   return (
     <View>
       <View style={Styles.container}>
-        <TouchableOpacity>
+        <TouchableOpacity  onPress={onBack} >
           <Image source={require('../assets/back-icon.png')} />
         </TouchableOpacity>
         <Text style={Styles.headerText}>Create Alert</Text>
@@ -47,18 +106,14 @@ const CreateAlert = ({ selectedCryptos }) => {
       <View style={Styles.dropdownContainer}>
         <Text style={{ color: 'white', marginVertical: 20 }}>Alert Type</Text>
         <Picker
+          key="pickerKey"
           selectedValue={selectedValue}
           onValueChange={(value) => setSelectedValue(value)}
-          style={Styles.inputAndroid}
-          itemStyle={{
-            backgroundColor: 'green',
-            marginLeft: 0,
-            paddingLeft: 15
-          }}
-          placeholder='Enter here'
+          style={Styles.input}
           mode="dropdown"
         >
-          <Picker.Item label="Price reaches" value="Price reaches"/>
+          <Picker.Item label="Select an option" value={null} key="defaultOption" />
+          <Picker.Item label="Price reaches" value="Price reaches" />
           <Picker.Item label="Price rises above" value="Price rises above" />
           <Picker.Item label="Percentage Increase" value="Percentage Increase" />
           <Picker.Item label="Volume Increase" value="Volume Increase" />
@@ -70,18 +125,21 @@ const CreateAlert = ({ selectedCryptos }) => {
           style={Styles.input}
           placeholder="Enter Here"
           placeholderTextColor='white'
-
+          value={valueInput}
+          onChangeText={(text) => setValueInput(text)}
         />
       </View>
       <View style={Styles.dropdownContainer}>
         <Text style={{ color: 'white', marginVertical: 20 }}>Frequency</Text>
         <Picker
-          selectedValue={selectedValue}
-          onValueChange={(value) => setSelectedValue(value)}
+          selectedValue={frequency}
+          onValueChange={(value) => setFrequency(value)}
           style={Styles.inputAndroid}
           placeholder='Enter here'
           mode="dropdown"
         >
+
+          <Picker.Item label="Select an option" value={null} />
           <Picker.Item label="Only Once" value="Only Once" />
           <Picker.Item label="Once a day" value="Once a day" />
           <Picker.Item label="Always" value="Always" />
@@ -90,7 +148,7 @@ const CreateAlert = ({ selectedCryptos }) => {
         </Picker>
       </View>
       <View style={Styles.container3}>
-        <TouchableOpacity style={Styles.btn} >
+        <TouchableOpacity style={Styles.btn} onPress={handleCreateAlert}>
           <Text style={{ color: '#FFFFFF', textAlign: 'center', textAlignVertical: 'center' }}>
             Create Alert
           </Text>
@@ -191,7 +249,7 @@ const Styles = StyleSheet.create({
     paddingLeft: 8,
     width: '100%',
     paddingLeft: 20,
-    color:"white",
+    color: "white",
   },
   dropdownContainer: {
     marginBottom: 20,

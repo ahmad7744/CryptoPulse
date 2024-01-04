@@ -3,15 +3,21 @@ import { View, Text, StyleSheet, ImageBackground, Image, TouchableOpacity, Butto
 import SearchCoin from './SearchCoin';
 import CreateAlert from './CreateAlert';
 
-const AddAlert = () => {
+
+
+const AddAlert = ({handleback}) => {
     const [showSearchCurrency, setShowSearchCurrency] = useState(false);
     const [selectedCryptoForAlert, setSelectedCryptoForAlert] = useState(null);
+    
+    
 
     const handleAddAlertPress = () => {
         // Reset selectedCryptoForAlert when pressing "Add Alert"
         setSelectedCryptoForAlert(null);
         setShowSearchCurrency(true);
     };
+    
+    
 
     const handleCryptoSelect = (crypto) => {
         setSelectedCryptos([...selectedCryptos, crypto]);
@@ -109,11 +115,11 @@ const AddAlert = () => {
 
     //     setContentIndex(contentIndex + 1);
     // };
-    const handleBack = () => {
-        setShowSearchAdd(false);
+    const handleBacknew = () => {
+        setShowSearchCurrency(false);
     };
-    const handlebackhome = () => {
-        setshowCurrencyChart(false)
+    const handlebackforalert = () => {
+        setSelectedCryptoForAlert(false)
     }
     function gettingTheRealtimeValues() {
         setSelectedCryptos((prevSelectedCryptos) => {
@@ -135,7 +141,7 @@ const AddAlert = () => {
         gettingTheRealtimeValues()
     }, [tickerValues, selectedCryptos?.length])
     let searchProps = {
-        onBack: handleBack, onCryptoSelect: handleCryptoSelect, setSelectedCryptos, tickerValues, filteredCoins, searchQuery, setSearchQuery
+        onBack: handleBacknew, onCryptoSelect: handleCryptoSelect, setSelectedCryptos, tickerValues, filteredCoins, searchQuery, setSearchQuery
     }
 
     return (
@@ -146,14 +152,17 @@ const AddAlert = () => {
       {showSearchCurrency ? (
         <SearchCoin {...searchProps} />
       ) : selectedCryptoForAlert ? (
-        <CreateAlert selectedCrypto={selectedCryptoForAlert} selectedCryptos={selectedCryptos} />
+        <CreateAlert selectedCrypto={selectedCryptoForAlert} selectedCryptos={selectedCryptos}  />
       ) : (
         <View style={Styles.mainconint}>
           <View style={Styles.container}>
-            <TouchableOpacity onPress={() => setShowSearchCurrency(false)}>
+            <TouchableOpacity onPress={handleback}>
               <Image source={require('../assets/back-icon.png')} />
             </TouchableOpacity>
             <Text style={Styles.headerText}>Notification Alert</Text>
+            <View>
+            
+            </View>
           </View>
 
           <View style={{ paddingLeft: 15, paddingRight: 15 }}>
@@ -165,7 +174,7 @@ const AddAlert = () => {
           </View>
 
           {selectedCryptos.map((crypto, index) => (
-            <CreateAlert key={index} selectedCrypto={selectedCryptos} />
+            <CreateAlert key={index} selectedCrypto={selectedCryptos}  />
           ))}
         </View>
       )}
